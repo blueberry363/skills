@@ -1,0 +1,18 @@
+# 本地安装/验证产物（npx skills CLI 与各 agent 技能目录）
+.agents/
+.claude/
+.codex/
+.cursor/
+.augment/
+.continue/
+.windsurf/
+.opencode/
+.goose/
+# IDE / 工作流目录
+.trae/
+.idea/
+.vscode/
+# 依赖与锁文件
+skills-lock.json
+.skill-lock.json
+node_modules/
