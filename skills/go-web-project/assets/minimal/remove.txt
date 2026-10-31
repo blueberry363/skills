@@ -4,3 +4,4 @@ internal/service/user.go
 internal/service/user_test.go
 internal/model/user.go
 internal/model/user_store.go
+internal/model/user_store_integration_test.go

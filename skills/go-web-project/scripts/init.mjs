@@ -147,6 +147,7 @@ export async function generate(options = {}) {
 
   if (!SERVICE_RE.test(service)) throw new Error(`--service 只能含小写字母、数字、连字符：${service}`);
   if (!MODULE_RE.test(options.module)) throw new Error(`--module 含非法字符：${options.module}`);
+  if (!/^\d+\.\d+(\.\d+)?$/.test(goVersion)) throw new Error(`--go 版本格式不合法：${goVersion}（示例 1.27.0）`);
 
   const vars = {
     module: options.module,

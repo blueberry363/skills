@@ -16,7 +16,7 @@
 ## 1. 速览
 
 - 请求路径：`middleware → router → controller(binding) → service → model(GORM) → response`
-- 依赖方向：`main → router → controller → service → model`；`response`、`apperr` 是叶子包，任何层可用
+- 依赖方向：`main → router → controller → service → model`；`response`、`apperr`、`reqctx` 是叶子包，任何层可用
 - `controller` 禁止 import `gorm.io/gorm`，`model` 禁止 import `gin`，`service` 禁止 import `gin` 与 `net/http`
 
 ```
@@ -28,6 +28,7 @@ internal/service/      S：业务规则与事务边界
 internal/model/        M：GORM 模型 + 数据访问（store 接口与实现）
 internal/response/     统一响应体与错误映射（唯一写 HTTP 状态码的地方）
 internal/apperr/       业务错误哨兵
+internal/reqctx/       gin.Context 键名（middleware 与 response 共用）
 internal/config/       环境变量解析与校验
 internal/database/     GORM 连接池构造
 db/migrations/         goose 迁移，schema 的唯一来源
@@ -52,6 +53,8 @@ docs/                  专题文档（按第 6 段索引按需读）
 | 迁移 | `make migrate-up` / `make migrate-down` | 需 make、`DATABASE_URL`，首次联网拉 goose |
 | Lint | `make lint` | 需 golangci-lint |
 | 漏洞扫描 | `make vuln` | 需 govulncheck |
+
+`make` 目标需 GNU make；Windows 在 Git Bash 或 WSL 中执行。CI 另有 lint 与漏洞扫描任务（见第 4 段）。
 
 **完成定义**：`make check` 全绿（无 make 时逐条执行格式、静态检查、测试三行），新增接口有对应的 controller 测试，`go mod tidy` 无 diff。
 
@@ -83,7 +86,7 @@ docs/                  专题文档（按第 6 段索引按需读）
 
 - 分支：`feat/<scope>`、`fix/<scope>`、`chore/<scope>`。
 - commit：Conventional Commits，例如 `feat(api): add user list endpoint`。
-- PR 前本地执行 `make check`；CI 执行同一套命令外加 `test-race`。
+- PR 前本地执行 `make check`；CI 执行同一套命令外加 `test-race`、集成测试编译检查、Lint 与漏洞扫描。
 - 涉及 schema 的 PR 必须同时包含迁移与回滚脚本，并在描述中写明数据影响。
 - 一个 PR 只做一类改动：功能、重构、依赖升级分开提交，便于回滚与评审。
 - 改动分层、命令、`docs/` 或迁移流程时，同一个 PR 内同步更新对应文档。

@@ -24,3 +24,24 @@ jobs:
 
       - name: 竞态检测
         run: make test-race
+
+      - name: 集成测试编译检查（真实执行需数据库，见 make test-integration）
+        run: go vet -tags=integration ./...
+
+      - name: 漏洞扫描
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2

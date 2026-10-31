@@ -15,7 +15,7 @@
 
 - 新端点：成功 1 例 + 至少 1 个失败分支（校验失败或资源不存在）。
 - bug 修复：先写能失败的复现测试，再改实现。
-- 依赖数据库的测试加 `//go:build integration` 标签，用 `t.Cleanup` 清理数据；运行用 `make test-integration`（需 `make db-up` 与 `.env`，不进 `make check`）。
+- 依赖数据库的测试加 `//go:build integration` 标签，用事务或 `t.Cleanup` 清理数据；运行用 `make test-integration`（需 `make db-up` 与 `.env`，不进 `make check`）。示例见 `internal/model/user_store_integration_test.go`，CI 只做编译检查（`go vet -tags=integration ./...`），不连真实库。
 - 并发相关改动必须跑 `make test-race`（需 C 工具链）。
 - 基准测试用 `b.Loop()`（Go 1.24+）。
 

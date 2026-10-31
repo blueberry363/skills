@@ -83,7 +83,7 @@ go mod tidy             # 应当无 diff
 
 **4. 换栈**：换 Web 框架、ORM、数据库或分层风格时读 `references/stack-swap.md`，按对照表只改对应段落。
 
-**5. 自检**：改完模板或约束后跑 `node scripts/verify.mjs`——生成两种模式的脚手架、跑真实命令、逐条比对文档断言。
+**5. 自检**：改完模板或约束后跑 `node scripts/verify.mjs`——生成两种模式的脚手架、跑真实命令、逐条比对文档断言；对已有仓库用 `node scripts/verify.mjs --dir=<仓库>` 只跑断言。
 
 **不适用**：纯库 / SDK、CLI 工具、gRPC-only 服务，以及只要 README 或需求文档的场景。
 

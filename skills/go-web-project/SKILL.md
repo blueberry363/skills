@@ -22,6 +22,12 @@ description: 为 Go Web 服务初始化可编译的脚手架并建立可执行�
 - gRPC-only 或消息驱动服务：把 `references/agents-template.md` 第 4 段换成传输层约定，其余可复用；
 - 只需要 README、需求文档、架构散文：不加载本技能。
 
+## 已知不包含（intentional non-goal）
+
+- 认证 / 授权中间件：不预装 JWT / OIDC；接入约定见模板 `docs/security.md`（由中间件解析凭证并写入 `gin.Context`）；
+- 限流中间件：按 `middleware` 包现有模式自行接入；
+- metrics / tracing：不预装 Prometheus / OpenTelemetry。
+
 ## 输入
 
 - 目标仓库根目录与现有代码状态（`go.mod`、目录树、`Makefile`、CI 配置、`db/migrations`）；
@@ -30,7 +36,7 @@ description: 为 Go Web 服务初始化可编译的脚手架并建立可执行�
 ## 输出
 
 1. 目标仓库根目录的 `AGENTS.md`（根文件，80–180 行）与 `docs/` 专题文档（6 篇，每篇 20–120 行）；
-2. 全新项目额外产出：可编译的脚手架（完整 33 个文件 / minimal 30 个文件，含锁定的 `go.mod`/`go.sum`，见下节）；
+2. 全新项目额外产出：可编译的脚手架（完整 36 个文件 / minimal 32 个文件，含锁定的 `go.mod`/`go.sum` 与渲染出的 AGENTS.md，见下节）；
 3. 必要的配套：`Makefile` 中的任务入口、CI 命令对齐说明。
 
 脚手架可选，约束是必产出。用户只要约束时不要生成代码。
@@ -56,8 +62,8 @@ node scripts/init.mjs <目标目录> --module=<module 路径> [--service=api] [-
 
 | 模式 | 文件数 | 内容 |
 |---|---|---|
-| 完整（默认） | 33 | 分层骨架 + `user` 增删查改示例、controller/service 测试、`users` 迁移与 OpenAPI 端点 |
-| `--minimal` | 30 | 分层骨架 + `/healthz` `/readyz` 与探针测试；`service/`、`model/` 只留 `doc.go` 说明扩展顺序；占位迁移 `SELECT 1` |
+| 完整（默认） | 36 | 分层骨架 + `user` 增删查改示例、controller/service 测试、`users` 迁移与 OpenAPI 端点 |
+| `--minimal` | 32 | 分层骨架 + `/healthz` `/readyz` 与探针测试；`service/`、`model/` 只留 `doc.go` 说明扩展顺序；占位迁移 `SELECT 1` |
 
 minimal 模式仍然可编译、可迁移、有测试，不是空壳。
 
@@ -74,6 +80,7 @@ go mod tidy           # 应当无 diff
 ```
 
 `go test -race` 需要 cgo 与 C 工具链：本机具备才作为必跑命令，否则只在 CI 执行，并在 AGENTS.md 第 2 段标注前提。
+`make` 目标需 GNU make：Windows 在 Git Bash 或 WSL 中执行，同样写进 AGENTS.md 第 2 段的前提说明。
 
 ### 一键自检
 
@@ -83,11 +90,22 @@ go mod tidy           # 应当无 diff
 node scripts/verify.mjs          # 生成两种模式 → 跑全部命令 → 比对 AGENTS.md 断言
 node scripts/verify.mjs --race   # 本机有 C 工具链时连竞态一起验
 node scripts/verify.mjs --keep   # 失败时保留临时目录便于排查
+node scripts/verify.mjs --dir=<已有仓库>   # 不生成脚手架，只校验该仓库 AGENTS.md 的断言
 ```
 
-它覆盖 59 项断言：技能仓库结构、两种模式的文件数与占位符、`go build`/`gofmt`/`go vet`/`go test`/`tidy` 漂移、
-根文件行数与表格结构、`docs/` 索引完整性与每篇篇幅、`make` 目标是否存在、引用路径是否存在、6 项版本一致、
-分层边界、统一响应体规则、编码规范（禁用包名 / 导出注释 / 无直接退出进程）、minimal 无业务残留。任一项失败即退出码 1。
+它覆盖数十项断言（计数以运行输出为准）：技能仓库结构、两种模式的文件数与占位符、`go build`/`gofmt`/`go vet`/`go test`/`tidy` 漂移、
+集成测试编译（`go vet -tags=integration`）、根文件行数与表格结构、`docs/` 索引完整性与每篇篇幅、`make` 目标是否存在、
+引用路径是否存在、6 项版本一致、分层边界、统一响应体规则、OpenAPI paths 与路由注册一致、Error schema 形状、
+`request_id` 键名单点、编码规范（禁用包名 / 导出注释 / 无直接退出进程）、minimal 无业务残留。任一项失败即退出码 1。
+
+### 刷新模板依赖
+
+模板锁定的版本会老化，按此流程升级并保持自检全绿：
+
+1. `node scripts/init.mjs /tmp/goweb-refresh --module=example.com/refresh/api` 生成临时项目；
+2. 在生成目录依次执行 `go get -u ./...` → `go build ./...` → `go test -shuffle=on ./...`；
+3. 把新的 `go.mod` / `go.sum` 复制回 `assets/template/`，同步更新 `docs/stack.md` 与 AGENTS.md 中的版本号；
+4. `node scripts/verify.mjs` 全绿后提交。
 
 ## 工作流
 
@@ -133,6 +151,8 @@ CGO_ENABLED=1 go test -race ./...   # 有 C 工具链时才作为必跑
 
 同时核对：`go.mod` 的版本号与文中一致；目录树与 `ls` 结果一致；`make check` 若存在则与 CI 命令一致。
 
+已有仓库（未生成脚手架）用 `node scripts/verify.mjs --dir=<仓库>` 只跑断言比对；缺失的模板文件（如 `compose.yaml`）对应断言自动跳过，不会误报。
+
 ### 5. 同步
 
 - README 保持"给人看"的定位，不重复 AGENTS.md 内容；两边冲突时以 AGENTS.md 为准并在 PR 中修正 README；
@@ -173,13 +193,13 @@ CGO_ENABLED=1 go test -race ./...   # 有 C 工具链时才作为必跑
 - [ ] `go` 指令版本与 `go.mod` 一致
 - [ ] 目录树与真实结构一致
 - [ ] 与 CI 命令一致
-- [ ] `node scripts/verify.mjs` 全绿（59 项断言）
+- [ ] `node scripts/verify.mjs` 全绿（已有仓库用 `--dir` 模式）
 - [ ] 禁止清单中每条都能被 review 判定"违反/未违反"
 
 ## 参考
 
 - `scripts/init.mjs`：脚手架生成器（渲染 `assets/template/` 并生成 AGENTS.md），也可作为库 `import { generate }`
-- `scripts/verify.mjs`：一致性自检（两种模式 + 命令 + 文档断言，47 项）
+- `scripts/verify.mjs`：一致性自检（生成两种模式跑真实命令 + OpenAPI 契约 + 编码规范断言；`--dir` 对已有仓库只跑 AGENTS.md 断言）
 - `assets/template/`：完整脚手架模板树，含 `{{MODULE}}`/`{{SERVICE}}`/`{{GO_VERSION}}`/`{{GO_MINOR}}` 占位符
 - `assets/minimal/`：minimal 覆盖层（`remove.txt` 删除清单 + `files/` 差异文件）
 - `references/agents-template.md`：AGENTS.md 模板（生成器也用它渲染项目级 AGENTS.md）

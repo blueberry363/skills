@@ -15,11 +15,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"{{MODULE}}/internal/reqctx"
 	"{{MODULE}}/internal/response"
 )
-
-// RequestIDContextKey 是 request_id 在 gin.Context 中的键名。
-const RequestIDContextKey = "request_id"
 
 // RequestID 透传或生成 X-Request-Id，并写入 gin.Context 与响应头。
 func RequestID() gin.HandlerFunc {
@@ -28,7 +26,7 @@ func RequestID() gin.HandlerFunc {
 		if id == "" {
 			id = newRequestID()
 		}
-		c.Set(RequestIDContextKey, id)
+		c.Set(reqctx.RequestIDKey, id)
 		c.Header("X-Request-Id", id)
 		c.Next()
 	}
@@ -42,7 +40,7 @@ func AccessLog(logger *slog.Logger) gin.HandlerFunc {
 		c.Next()
 
 		logger.InfoContext(c.Request.Context(), "http_request",
-			"request_id", c.GetString(RequestIDContextKey),
+			reqctx.RequestIDKey, c.GetString(reqctx.RequestIDKey),
 			"method", c.Request.Method,
 			"path", c.Request.URL.Path,
 			"status", c.Writer.Status(),
@@ -65,7 +63,7 @@ func Recovery(logger *slog.Logger) gin.HandlerFunc {
 				"panic", fmt.Sprint(rec),
 				"method", c.Request.Method,
 				"path", c.Request.URL.Path,
-				"request_id", c.GetString(RequestIDContextKey),
+				reqctx.RequestIDKey, c.GetString(reqctx.RequestIDKey),
 				"stack", string(debug.Stack()),
 			)
 			// 响应头若已写出，再写会触发 Gin 告警，属预期行为。

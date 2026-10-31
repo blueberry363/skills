@@ -35,7 +35,7 @@ paths:
         "503":
           description: 依赖不可用
 
-  /v1/users:
+  /api/v1/users:
     get:
       summary: 分页列出用户
       operationId: listUsers
@@ -71,6 +71,8 @@ paths:
                     type: integer
         "422":
           $ref: "#/components/responses/Invalid"
+        "499":
+          $ref: "#/components/responses/ClientClosed"
 
     post:
       summary: 创建用户
@@ -101,8 +103,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "422":
           $ref: "#/components/responses/Invalid"
+        "499":
+          $ref: "#/components/responses/ClientClosed"
 
-  /v1/users/{id}:
+  /api/v1/users/{id}:
     get:
       summary: 按 ID 获取用户
       operationId: getUser
@@ -124,6 +128,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/Invalid"
+        "499":
+          $ref: "#/components/responses/ClientClosed"
 
 components:
   schemas:
@@ -145,16 +151,15 @@ components:
 
     Error:
       type: object
-      required: [error]
+      required: [code, message]
       properties:
-        error:
-          type: object
-          required: [code, message]
-          properties:
-            code:
-              type: string
-            message:
-              type: string
+        code:
+          type: integer
+          description: 业务码，0 表示成功
+        message:
+          type: string
+        data:
+          nullable: true
 
   responses:
     NotFound:
@@ -171,6 +176,12 @@ components:
             $ref: "#/components/schemas/Error"
     Invalid:
       description: 入参不合法
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ClientClosed:
+      description: 客户端已断开连接
       content:
         application/json:
           schema:

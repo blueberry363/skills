@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"{{MODULE}}/internal/apperr"
+	"{{MODULE}}/internal/reqctx"
 )
 
 // Body 是所有响应的统一外壳。
@@ -60,7 +61,7 @@ func Fail(c *gin.Context, logger *slog.Logger, err error) {
 			"err", err.Error(),
 			"method", c.Request.Method,
 			"path", c.Request.URL.Path,
-			"request_id", c.GetString("request_id"),
+			reqctx.RequestIDKey, c.GetString(reqctx.RequestIDKey),
 		)
 	}
 
