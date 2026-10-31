@@ -1,0 +1,20 @@
+# 二进制与构建产物
+/bin/
+/tmp/
+/dist/
+
+# 本地环境变量（.env.example 是唯一提交的样例）
+.env
+.env.*
+!.env.example
+
+# 测试与覆盖率
+*.test
+coverage.out
+coverage.html
+
+# 编辑器与系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

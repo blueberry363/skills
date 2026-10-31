@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 依赖校验
+        run: go mod tidy && git diff --exit-code go.mod go.sum
+
+      - name: 全量验收
+        run: make check
+
+      - name: 竞态检测
+        run: make test-race

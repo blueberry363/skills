@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: {{SERVICE}}
+  version: 0.1.0
+  description: |
+    对外契约的唯一来源。新增资源时先补这里，再写 controller 与测试。
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /healthz:
+    get:
+      summary: 存活探针
+      operationId: getHealthz
+      responses:
+        "200":
+          description: 进程存活
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: ok
+
+  /readyz:
+    get:
+      summary: 就绪探针（检查数据库）
+      operationId: getReadyz
+      responses:
+        "200":
+          description: 依赖可用
+        "503":
+          description: 依赖不可用
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          description: 业务码，0 表示成功
+        message:
+          type: string
+        data:
+          nullable: true
